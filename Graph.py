@@ -38,7 +38,7 @@ class Edge:
             "from": self.from_node.id,
             "to": self.to_node.id,
             "color": self.color,
-            "id":self.id
+            "id": self.id
         }
 class Graph:
     def __init__(self):
@@ -58,8 +58,8 @@ class Graph:
 
     def to_dic(self):
         res = dict()
-        res["node"] = [i.to_dic() for i in self.nodes]
-        res["edge"] = [i.to_dic() for i in self.edges]
+        res["nodes"] = [i.to_dic() for i in self.nodes]
+        res["edges"] = [i.to_dic() for i in self.edges]
         return res
 
 
