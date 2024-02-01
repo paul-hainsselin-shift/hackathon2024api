@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import os
-from gremlin_python.structure.graph import Graph
-from gremlin_python.driver.driver_remote_connection import DriverRemoteConnection
+from azure.core.exceptions import AzureError
+from azure.cosmos import CosmosClient, PartitionKey
 
 app = Flask(__name__)
 
@@ -11,44 +11,22 @@ auth_key = os.environ.get('primary_db_key')
 auth_key = "f71da6Q1B8wOID71BIUiEzJMSyoTFpZxrDjTPJJsRszW3z3vIgCkQxHDs94wnMecR4g1XFoVw61NACDbRxXCEg=="
 
 db_name = 'team17'
-graph = Graph()
-connection = DriverRemoteConnection(gremlin_endpoint, 'g',
-                                    username="/dbs/graphdb/colls/Network",
-                                    password=auth_key)
-g = graph.traversal().withRemote(connection)
+container_name = 'Network'
+
+client = CosmosClient(URI, credential=auth_key)
+database = client.get_database_client(db_name)
+container = database.get_container_client(container_name)
 
 # Endpoint to get a graph (simplified example)
 @app.route('/GetGraph', methods=['GET'])
 def get_graph():
-    # Implement logic to fetch the graph data from Cosmos DB
-    # This is a placeholder logic
-    vertex = g.V().toList()
-    edges = g.E().toList()
+    items = list(container.query_items(
+      query="SELECT * FROM c",
+      enable_cross_partition_query=True
+    ))
 
-    vertex_processed = []
-    for v in vertex:
-      new_vertex = {'id': v.id,
-                    'label': v.label}
-      for p in v.properties:
-        if p != "pk":
-          new_vertex[p] = v.properties[p]['value']
-
-      vertex_processed.append(new_vertex)
-
-    edges_processed = []
-    for e in edges:
-      new_edge = {'from': e.inV,
-                  'to': e.outV,
-                  'id': e.id,
-                  'color': "red"}
-
-      edges_processed.append(new_edge)
-
-    return jsonify(
-      {
-        "nodes": vertex_processed,
-        "edges": edges_processed
-      })
+    # Process fetched items if needed
+    return jsonify(items)
 
 
 # Endpoint to get the shortest path between two nodes
